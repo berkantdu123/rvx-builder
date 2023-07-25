@@ -1,69 +1,100 @@
 <!DOCTYPE html>
 <html lang="en-US">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Version Selector</title>
-    <link href="../styles/fontawesome.css" rel="stylesheet" type="text/css" />
-    <link href="../styles/core.css" rel="stylesheet" type="text/css" />
-    <link href="../styles/apps.css" rel="stylesheet" type="text/css" />
-    <link href="../styles/dependencies.css" rel="stylesheet" type="text/css" />
-    <script src="../index.js"></script>
-    <script src="../colors.js" defer></script>
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>Version Selector</title>
+  <link href="../styles/fontawesome.css" rel="stylesheet" type="text/css" />
+  <link href="../styles/core.css" rel="stylesheet" type="text/css" />
+  <link href="../styles/apps.css" rel="stylesheet" type="text/css" />
+  <link href="../styles/dependencies.css" rel="stylesheet" type="text/css" />
+  <script src="../index.js"></script>
+  <script src="../colors.js" defer></script>
+</head>
 
-  <body>
-    <div id="container">
-      <main>
-        <header>
-          <h1>
-            <i class="fa-solid fa-file-arrow-down"></i>Select the version you
-            want to download
-          </h1>
-        </header>
-        <div id="content--wrapper">
-          <div id="content">
-            <ul id="versions"></ul>
-          </div>
+<body>
+  <div id="container">
+    <main>
+      <header>
+        <h1>
+          <i class="fa-solid fa-file-arrow-down"></i>Select the version you
+          want to download
+        </h1>
+      </header>
+      <div id="content--wrapper">
+        <div id="content">
+          <ul id="versions"></ul>
         </div>
-      </main>
-      <footer>
-        <a
-          href="https://github.com/reisxd/revanced-builder"
-          target="_blank"
-          aria-label="ReVanced Builder on GitHub"
-          title="ReVanced Builder on GitHub"
-          ><i
-            aria-hidden="true"
-            class="social-icon fa-brands fa-xl fa-github"
-          ></i
-        ></a>
-        <a
-          href="/about"
-          target="_blank"
-          aria-label="About ReVanced Builder"
-          title="About ReVanced Builder"
-          ><i
-            aria-hidden="true"
-            class="social-icon fa-solid fa-xl fa-question-circle"
-          ></i
-        ></a>
-        <a
-          href="/settings"
-          target="_blank"
-          aria-label="Settings"
-          title="Settings"
-          ><i aria-hidden="true" class="social-icon fa-xl fa-solid fa-gear"></i
-        ></a>
-        <span class="right"></span>
-        <button id="back" onclick="history.back()">Back</button>
-        <button class="highlighted" id="continue" onclick="setAppVersion()">
-          Continue
-        </button>
-      </footer>
-    </div>
-  </body>
+      </div>
+    </main>
+    <footer>
+      <a
+        href="https://github.com/reisxd/revanced-builder"
+        target="_blank"
+        aria-label="ReVanced Builder on GitHub"
+        title="ReVanced Builder on GitHub"
+        ><i
+          aria-hidden="true"
+          class="social-icon fa-brands fa-xl fa-github"
+        ></i
+      ></a>
+      <a
+        href="/about"
+        target="_blank"
+        aria-label="About ReVanced Builder"
+        title="About ReVanced Builder"
+        ><i
+          aria-hidden="true"
+          class="social-icon fa-solid fa-xl fa-question-circle"
+        ></i
+      ></a>
+      <a
+        href="/settings"
+        target="_blank"
+        aria-label="Settings"
+        title="Settings"
+        ><i aria-hidden="true" class="social-icon fa-xl fa-solid fa-gear"></i
+      ></a>
+      <span class="right"></span>
+      <button id="back" onclick="history.back()">Back</button>
+      <button class="highlighted" id="continue" onclick="setAppVersion()">
+        Continue
+      </button>
+    </footer>
+  </div>
+  <script src="https://cdn.jsdelivr.net/gh/webadb/webadb.js@master/webadb.js"></script>
   <script>
+    let adb;
+
+    async function connectToDevice() {
+      try {
+        const usbDevices = await navigator.usb.getDevices();
+        if (usbDevices.length > 0) {
+          const usbDevice = usbDevices[0];
+          console.log('Appareil détecté !');
+          const webusb = await Adb.open("WebUSB");
+          adb = await webusb.connectAdb("host::");
+        } else {
+          const requestedDevice = await navigator.usb.requestDevice({ filters: [] });
+          console.log('Appareil connecté !');
+          const webusb = await Adb.open("WebUSB");
+          adb = await webusb.connectAdb("host::");
+        }
+      } catch (error) {
+        console.error('Erreur de connexion à l\'appareil :', error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const connectButton = document.createElement('button');
+      connectButton.textContent = 'Connect to Device';
+      connectButton.addEventListener('click', connectToDevice);
+
+      const footer = document.querySelector('footer');
+      footer.insertBefore(connectButton, footer.firstChild);
+    });
+
     ws.onopen = () => getAlreadyExists();
   </script>
+</body>
 </html>
