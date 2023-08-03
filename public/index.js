@@ -86,9 +86,9 @@ function setPatches() {
     x.getAttribute('data-patch-name')
   );
 
-  if (selectedPatchList.includes('enable-debugging')) {
+  if (selectedPatchList.includes('enable-debugging') || selectedPatchList.includes('enable-debug-logging')) {
     const confirmDebug = confirm(
-      '**Included the "Enable Debugging" Patch**\n***Are you sure?***\nBecause this patch will slow down your app and it\'s only for debugging purposes.'
+      '**Included the "Enable Debugging" Patch**\n***Are you sure?***\nit\'s only for debugging purposes.'
     );
 
     if (!confirmDebug) return;
@@ -123,7 +123,7 @@ function setAppVersion(arch, version) {
         versionChecked.getAttribute('data-recommended') !== '1'
       ) {
         const alertVersion = confirm(
-          "**Non-recommended version selected**\n***Are you sure?***\nThis version isn't recommended, do you really want to use this version?"
+          "**Non-supported version selected**\n***Are you sure?***\nThis version isn't supported, do you really want to use this version?"
         );
 
         if (!alertVersion) return;
@@ -131,7 +131,7 @@ function setAppVersion(arch, version) {
 
       if (versionChecked.getAttribute('data-beta') !== '0') {
         const alertBetaVersion = confirm(
-          '**Beta version selected**\n***Are you sure?***\nThis version is beta and it might have issues, do you really want to use this version?'
+          "**Non-supported version selected**\n***Are you sure?***\nThis version isn't supported, do you really want to use this version?"
         );
 
         if (!alertBetaVersion) return;
@@ -165,7 +165,7 @@ function setAppVersion(arch, version) {
 function getAppVersions(isRooted, page = 1) {
   document.getElementsByTagName('header')[0].innerHTML = `
     <h1><i class="fa-solid fa-file-arrow-down"></i>Select the version you want to download</h1>
-    <span>Versions marked as beta might have bugs or can be unstable, unless marked as recommended<span>
+    <span>Versions marked as beta might have bugs or can be unstable, unless marked as supported<span>
     ${
       isRooted
         ? '<span><strong>You are building rooted ReVanced Extended</strong>, ReVanced Extended Builder will automatically download the correct version for you.<br>If you didn\'t intend on doing a rooted build, include all "Root required to exclude" patches<span>'
@@ -187,7 +187,11 @@ function getAppVersions(isRooted, page = 1) {
 }
 
 function buildReVanced() {
-  sendCommand({ event: 'patchApp' });
+  if (localStorage.getItem('rip-libs')) {
+    sendCommand({ event: 'patchAppWithRipLibs' });
+  } else {
+    sendCommand({ event: 'patchApp' });
+  }
 }
 
 function getAlreadyExists() {
@@ -268,6 +272,10 @@ function addSearch(isPatches) {
 }
 
 function setSources() {
+  const cliOrg = document.getElementById('cli-org').value;
+  const cliSrc = document.getElementById('cli-src').value;
+  const cli = `${cliOrg}/${cliSrc}`;
+
   const patchesOrg = document.getElementById('patch-org').value;
   const patchesSrc = document.getElementById('patch-src').value;
   const patches = `${patchesOrg}/${patchesSrc}`;
@@ -279,6 +287,7 @@ function setSources() {
   sendCommand({
     event: 'setSettings',
     settings: {
+      cli,
       patches,
       integrations
     }
@@ -392,6 +401,18 @@ ws.onmessage = (msg) => {
           const version = message.versionList[i];
           const noRec = version.recommended == 'NOREC';
           const recommended = version.recommended ? 1 : 0;
+          const autoSelect = message.supported == 'C' ? version.version : message.supported;
+
+          versionsElement.innerHTML += `
+          ${
+            message.page == 1 && i == 0
+              ? `<li><input type="radio" name="version" id="app-${len}" value="${
+                autoSelect
+              }" data-beta="0" data-recommended="1"/>
+                <label for="app-${len}">${autoSelect} (AUTO SELECT)</label></li>`
+              : ''
+          }`;
+
           versionsElement.innerHTML += `
             <li>
             <input type="radio" name="version" id="app-${i}" value="${
@@ -402,7 +423,7 @@ ws.onmessage = (msg) => {
             <label for="app-${i}">${version.version} ${
             version.beta ? ' (beta)' : ''
           } ${
-            !noRec ? (version.recommended ? ' (recommended)' : '') : ''
+            !noRec ? (version.recommended ? ' (supported)' : '') : ''
           }</label></li>`;
         }
 
@@ -496,7 +517,7 @@ ws.onmessage = (msg) => {
               message.isRooted ? ' ' : '<br>'
             }Do you want to use it?${
           message.isRooted
-            ? '<br>(Saying no is recommended for rooted building)<br>If you didn\'t intend on doing a rooted build, include all "Root required to exclude" patches'
+            ? '<br>(Saying no is supported for rooted building)<br>If you didn\'t intend on doing a rooted build, include all "Root required to exclude" patches'
             : ''
         }</span>`;
 
@@ -575,7 +596,7 @@ ws.onmessage = (msg) => {
     case 'askRootVersion':
       {
         const confirmVer = confirm(
-          `**Non Recommended Version**\nYour device has a non recommended version. This means you have to let the builder replace the stock YouTube with a recommended version.\nContinue?`
+          `**Non Supported Version**\nYour device has a non supported version. This means you have to let the builder replace the stock YouTube with a supported version.\nContinue?`
         );
 
         if (confirmVer)
@@ -584,7 +605,7 @@ ws.onmessage = (msg) => {
             installLatestRecommended: true
           });
         else {
-          if (confirm('Alright, proceed with the non-recommended version?'))
+          if (confirm('Alright, proceed with the non-supported version?'))
             return sendCommand({
               event: 'getAppVersion',
               useVer: true
@@ -628,8 +649,15 @@ ws.onmessage = (msg) => {
     }
 
     case 'settings': {
+      const cli = message.settings.cli.split('/');
       const patches = message.settings.patches.split('/');
       const integrations = message.settings.integrations.split('/');
+
+      const cliOrg = document.getElementById('cli-org');
+      const cliSrc = document.getElementById('cli-src');
+
+      cliOrg.value = cli[0];
+      cliSrc.value = cli[1];
 
       const patchesOrg = document.getElementById('patch-org');
       const patchesSrc = document.getElementById('patch-src');

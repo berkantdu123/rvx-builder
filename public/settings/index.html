@@ -88,6 +88,23 @@
                   autocomplete="off" /><span class="slider"></span
               ></label>
             </div>
+            <div class="option">
+              <h3>
+                <i class="fa-solid fa-circle-xmark"></i>RipLibs
+              </h3>
+
+              <p>
+                Leave only libraries that match the device's architecture.
+                <br />Caution: Available only on Android (termux).
+              </p>
+              <label class="switch"
+                ><input
+                  class="check"
+                  id="ripLibsBtn"
+                  type="checkbox"
+                  autocomplete="off" /><span class="slider"></span
+              ></label>
+            </div>
             <div id="src" class="option">
               <h3><i class="fa-solid fa-server"></i>Sources</h3>
 
@@ -95,6 +112,13 @@
                 Configure your custom sources.<br />Eg. GitHub
                 Username/Repository.
               </p>
+
+              <div>
+                <h3>Cli Organization</h3>
+                <input id="cli-org" class="searchBox" />
+                <h3>Cli Source</h3>
+                <input id="cli-src" class="searchBox" />
+              </div>
 
               <div>
                 <h3>Patches Organization</h3>
